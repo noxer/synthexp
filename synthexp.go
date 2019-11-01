@@ -3,6 +3,7 @@ package synthexp
 import (
 	"math/rand"
 	"regexp/syntax"
+	"unicode"
 )
 
 var (
@@ -243,6 +244,12 @@ func expandRanges(ranges []rune) []rune {
 }
 
 func expandRange(from, to rune) []rune {
+	if to == unicode.MaxRune {
+		to = 126
+	}
+	if to < from {
+		to = from
+	}
 	expanded := make([]rune, to-from+1)
 	for r := from; r <= to; r++ {
 		expanded[r-from] = r
