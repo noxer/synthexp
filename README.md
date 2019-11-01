@@ -66,3 +66,6 @@ Hello World. Here is some randomness nX6a
 Hello World. Here is some randomness 8DB
 Hello World. Here is some randomness p3y1
 ```
+
+## limits
+The library currently can't reliably generate strings for regular expressions containing `^`, `$`, `\b` and `\B`.
