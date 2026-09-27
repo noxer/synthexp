@@ -1,21 +1,29 @@
 # synthexp
-This package helps you generate strings that match your regular expression.
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/noxer/synthexp.svg)](https://pkg.go.dev/github.com/noxer/synthexp)
+[![CI](https://github.com/noxer/synthexp/actions/workflows/ci.yml/badge.svg)](https://github.com/noxer/synthexp/actions/workflows/ci.yml)
+
+This package helps you generate strings that match your regular expression. It
+understands the same syntax as Go's [`regexp`](https://pkg.go.dev/regexp) package.
 
 ## installation
 ```bash
-go get -u github.com/noxer/synthexp
+go get github.com/noxer/synthexp
 ```
+Requires Go 1.27 or newer.
 
 ## api
 Synthesizing the string is a two step process, first you need to compile the regex.
 ```go
-syn, err := synthexp.Compile("Hello (World|Earth|the (dear|awesome) User)\\. Here is some randomness [\\w]{3,8}")
+syn, err := synthexp.Compile(`Hello (World|Earth|the (dear|awesome) User)\. Here is some randomness [\w]{3,8}`)
 if err != nil {
     fmt.Printf("Could not compile: %s\n", err)
 }
 ```
+Or, for expressions known to be valid, `syn := synthexp.MustCompile(...)`.
+
 Now you can use `syn` to generate as many matching strings as you want...
-```bash
+```go
 str := syn.SynthString()
 fmt.Println(str)
 ```
@@ -33,39 +41,48 @@ Hello World. Here is some randomness qr2HN3S
 Hello Earth. Here is some randomness oKL
 ```
 
-It can be useful for testing to have control over the captures in a regex. This can be provided by passing `*string`'s to the method (or `[]byte`/`[]rune` for `SynthBytes` and `Synth`). To skip captures and have the library generate random values you can pass `nil`. The provided values doesn't need to match the regex.
+### fixing captures
+It can be useful for testing to have control over the captures in a regex. This can be provided by passing `*string`s such as `new("value")` to the method (or `[]byte`/`[]rune` for `SynthBytes` and `Synth`). To skip captures and have the library generate random values you can pass `nil`. The provided values don't need to match the regex.
 ```go
-str := syn.SynthString(synthexp.Str("Terra"))
+str := syn.SynthString(new("Terra"))
 fmt.Println(str)
 ```
 ```
 Hello Terra. Here is some randomness Xf1
 Hello Terra. Here is some randomness aC_FwmW
 Hello Terra. Here is some randomness WX0
-Hello Terra. Here is some randomness Qyp
-Hello Terra. Here is some randomness Inf1y
-Hello Terra. Here is some randomness 8G0oG
-Hello Terra. Here is some randomness fIL
-Hello Terra. Here is some randomness VKZ
-Hello Terra. Here is some randomness 24d
-Hello Terra. Here is some randomness lLN
 ```
 ```go
-str := syn.SynthString(nil, synthexp.Str("glorious"))
+str := syn.SynthString(nil, new("glorious"))
 fmt.Println(str)
 ```
 ```
 Hello World. Here is some randomness Y55
-Hello Earth. Here is some randomness dej
-Hello World. Here is some randomness dpKI
 Hello glorious User. Here is some randomness qF8g
 Hello Earth. Here is some randomness 1Ucr
-Hello glorious User. Here is some randomness FmhfX_
-Hello glorious User. Here is some randomness KVcyhG
-Hello World. Here is some randomness nX6a
-Hello World. Here is some randomness 8DB
-Hello World. Here is some randomness p3y1
 ```
 
+### options
+`Compile` and `MustCompile` accept options:
+
+- `synthexp.WithRand(r *rand.Rand)` draws randomness from `r` (`math/rand/v2`), e.g. for reproducible output with a fixed seed. Without it, the auto-seeded global source is used.
+- `synthexp.WithMaxRepeat(n)` limits how many repetitions `*`, `+` and `{n,}` may add beyond their minimum (default `32`).
+
+```go
+syn := synthexp.MustCompile(`[a-z]+`, synthexp.WithRand(rand.New(rand.NewPCG(1, 2))), synthexp.WithMaxRepeat(8))
+```
+
+A `*Synthexp` is safe for concurrent use, unless it was created with `WithRand` (a `*rand.Rand` is not safe for concurrent use).
+
 ## limits
-The library currently can't reliably generate strings for regular expressions containing `^`, `$`, `\b` and `\B`.
+- Anchors and word boundaries (`^`, `$`, `\A`, `\z`, `\b`, `\B`) are supported by retrying generation until they hold. For expressions that can only rarely satisfy them this is best effort, and a non-matching string may be returned.
+- Expressions that can never match anything (e.g. `a^b`) produce `nil`.
+- Character classes prefer printable ASCII when they contain any; `.` draws from the exported `Alphabet`.
+
+## development
+```bash
+go test -race ./...
+golangci-lint run    # v2, built with Go 1.27 or newer
+go test -run '^$' -fuzz FuzzSynth -fuzztime 60s .    # or FuzzCaptures
+```
+Failing fuzz inputs are saved to `testdata/fuzz/` and replayed by every `go test` run; commit them as regression tests once fixed.
