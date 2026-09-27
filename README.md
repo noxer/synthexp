@@ -10,7 +10,7 @@ understands the same syntax as Go's [`regexp`](https://pkg.go.dev/regexp) packag
 ```bash
 go get github.com/noxer/synthexp
 ```
-Requires Go 1.22 or newer.
+Requires Go 1.27 or newer.
 
 ## api
 Synthesizing the string is a two step process, first you need to compile the regex.
@@ -42,9 +42,9 @@ Hello Earth. Here is some randomness oKL
 ```
 
 ### fixing captures
-It can be useful for testing to have control over the captures in a regex. This can be provided by passing `*string`'s to the method (or `[]byte`/`[]rune` for `SynthBytes` and `Synth`). To skip captures and have the library generate random values you can pass `nil`. The provided values don't need to match the regex.
+It can be useful for testing to have control over the captures in a regex. This can be provided by passing `*string`s such as `new("value")` to the method (or `[]byte`/`[]rune` for `SynthBytes` and `Synth`). To skip captures and have the library generate random values you can pass `nil`. The provided values don't need to match the regex.
 ```go
-str := syn.SynthString(synthexp.Str("Terra"))
+str := syn.SynthString(new("Terra"))
 fmt.Println(str)
 ```
 ```
@@ -53,7 +53,7 @@ Hello Terra. Here is some randomness aC_FwmW
 Hello Terra. Here is some randomness WX0
 ```
 ```go
-str := syn.SynthString(nil, synthexp.Str("glorious"))
+str := syn.SynthString(nil, new("glorious"))
 fmt.Println(str)
 ```
 ```
@@ -82,6 +82,7 @@ A `*Synthexp` is safe for concurrent use, unless it was created with `WithRand` 
 ## development
 ```bash
 go test -race ./...
+golangci-lint run    # v2, built with Go 1.27 or newer
 go test -run '^$' -fuzz FuzzSynth -fuzztime 60s .    # or FuzzCaptures
 ```
 Failing fuzz inputs are saved to `testdata/fuzz/` and replayed by every `go test` run; commit them as regression tests once fixed.

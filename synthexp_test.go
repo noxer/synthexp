@@ -88,10 +88,10 @@ func TestRepeatBounds(t *testing.T) {
 func TestCaptures(t *testing.T) {
 	syn := MustCompile(`Hello (World|Earth|the (dear|awesome) User)`, seeded())
 
-	if got := syn.SynthString(Str("Terra")); got != "Hello Terra" {
+	if got := syn.SynthString(new("Terra")); got != "Hello Terra" {
 		t.Errorf("got %q", got)
 	}
-	if got := syn.SynthString(Str("")); got != "Hello " {
+	if got := syn.SynthString(new("")); got != "Hello " {
 		t.Errorf("empty override: got %q", got)
 	}
 	if got := string(syn.SynthBytes([]byte("Terra"))); got != "Hello Terra" {
@@ -105,7 +105,7 @@ func TestCaptures(t *testing.T) {
 	allowed := []string{"Hello World", "Hello Earth", "Hello the glorious User"}
 	for range samples {
 		for _, got := range []string{
-			syn.SynthString(nil, Str("glorious"), Str("ignored")),
+			syn.SynthString(nil, new("glorious"), new("ignored")),
 			string(syn.SynthBytes(nil, []byte("glorious"))),
 		} {
 			if !slices.Contains(allowed, got) {
@@ -134,15 +134,13 @@ func TestConcurrent(t *testing.T) {
 	re := regexp.MustCompile(`^\w+@\w+\.com$`)
 	var wg sync.WaitGroup
 	for range 8 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			for range 100 {
 				if s := syn.SynthString(); !re.MatchString(s) {
 					t.Errorf("no match: %q", s)
 				}
 			}
-		}()
+		})
 	}
 	wg.Wait()
 }

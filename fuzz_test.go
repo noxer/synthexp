@@ -4,6 +4,7 @@ import (
 	"math/rand/v2"
 	"regexp"
 	"regexp/syntax"
+	"slices"
 	"testing"
 )
 
@@ -27,12 +28,7 @@ func hasAssertion(re *syntax.Regexp) bool {
 		syntax.OpWordBoundary, syntax.OpNoWordBoundary:
 		return true
 	}
-	for _, sub := range re.Sub {
-		if hasAssertion(sub) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(re.Sub, hasAssertion)
 }
 
 // FuzzSynth checks that synthesis never panics and that, for expressions
@@ -79,7 +75,7 @@ func FuzzCaptures(f *testing.F) {
 		if err != nil {
 			t.Skip()
 		}
-		syn.SynthString(Str(capture), nil, Str(capture))
+		syn.SynthString(new(capture), nil, new(capture))
 		syn.SynthBytes([]byte(capture), nil)
 		syn.Synth([]rune(capture))
 
@@ -88,7 +84,7 @@ func FuzzCaptures(f *testing.F) {
 		if err != nil {
 			return
 		}
-		if got, want := whole.SynthString(Str(capture)), string([]rune(capture)); got != want {
+		if got, want := whole.SynthString(new(capture)), string([]rune(capture)); got != want {
 			t.Fatalf("override %q of whole expression %q gave %q", capture, expr, got)
 		}
 	})

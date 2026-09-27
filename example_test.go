@@ -21,7 +21,7 @@ func ExampleSynthexp_SynthString() {
 	syn := synthexp.MustCompile(`Hello (World|Earth)!`)
 
 	// Fix the first capture; pass nil to let synthexp fill a capture itself.
-	fmt.Println(syn.SynthString(synthexp.Str("Terra")))
+	fmt.Println(syn.SynthString(new("Terra")))
 	// Output: Hello Terra!
 }
 

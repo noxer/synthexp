@@ -137,8 +137,13 @@ func toRunes(s string) []rune {
 }
 
 // Str returns a pointer to the string.
+//
+// Deprecated: Use new(str) instead, which Go supports since 1.26. Running
+// go fix rewrites existing calls automatically.
+//
+//go:fix inline
 func Str(str string) *string {
-	return &str
+	return new(str)
 }
 
 // assertion is a zero-width assertion that can only be checked once the
