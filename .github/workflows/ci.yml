@@ -23,3 +23,21 @@ jobs:
         run: test -z "$(gofmt -l .)" || (gofmt -d . && exit 1)
       - run: go vet ./...
       - run: go test -race ./...
+
+  fuzz:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [FuzzSynth, FuzzCaptures]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - run: go test -run '^$' -fuzz '^${{ matrix.target }}$' -fuzztime 60s .
+      - name: Upload failing inputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-${{ matrix.target }}
+          path: testdata/fuzz

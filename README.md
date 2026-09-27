@@ -78,3 +78,10 @@ A `*Synthexp` is safe for concurrent use, unless it was created with `WithRand` 
 - Anchors and word boundaries (`^`, `$`, `\A`, `\z`, `\b`, `\B`) are supported by retrying generation until they hold. For expressions that can only rarely satisfy them this is best effort, and a non-matching string may be returned.
 - Expressions that can never match anything (e.g. `a^b`) produce `nil`.
 - Character classes prefer printable ASCII when they contain any; `.` draws from the exported `Alphabet`.
+
+## development
+```bash
+go test -race ./...
+go test -run '^$' -fuzz FuzzSynth -fuzztime 60s .    # or FuzzCaptures
+```
+Failing fuzz inputs are saved to `testdata/fuzz/` and replayed by every `go test` run; commit them as regression tests once fixed.
